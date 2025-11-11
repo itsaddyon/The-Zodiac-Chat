@@ -11,7 +11,9 @@ from datetime import datetime
 # -----------------------------
 # Put your API Ninjas key here
 # -----------------------------
-API_NINJAS_KEY = "LGxSEyv5xLCzge0dacGJtA==sLDnyM5k1I1u2Fam"
+import os
+API_NINJAS_KEY = os.getenv("LGxSEyv5xLCzge0dacGJtA==sLDnyM5k1I1u2Fam")
+
 # -----------------------------
 
 app = Flask(__name__)
