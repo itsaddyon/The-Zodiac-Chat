@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Zodiac Chat✨</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+
+body {
+  font-family: 'Space Grotesk', 'Poppins', sans-serif;
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #0b1320, #000);
+  color: #f0f4f8;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* lift upward */
+  padding-top: 50px;
+  min-height: 100vh;
+  transition: background 2s ease;
+}
+
+/* Chat Container */
+#chat-container {
+  width: 440px;
+  background: rgba(22, 29, 48, 0.88);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 25px rgba(120, 110, 255, 0.25);
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  z-index: 5;
+  transition: opacity 1.5s ease;
+}
+
+/* Chat log */
+#chat-log {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(130, 150, 220, 0.2);
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.3) transparent;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  line-height: 1.4;
+  background: rgba(85, 108, 136, 0.5);
+  text-align: left;
+  animation: fadeIn 0.6s ease;
+}
+
+.user {
+  background: linear-gradient(120deg, #4e9bff, #6c63ff);
+  text-align: right;
+  color: white;
+}
+
+.bot {
+  background: rgba(255,255,255,0.08);
+  color: #e4eaff;
+  text-align: left;
+}
+
+/* Input section */
+#input-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+input, select {
+  width: 90%;
+  padding: 12px;
+  font-size: 15px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  outline: none;
+  transition: all 0.3s ease;
+  text-align: center;
+  letter-spacing: 0.3px;
+  box-shadow: 0 0 10px rgba(120, 110, 255, 0.1);
+}
+
+input:focus, select:focus {
+  background: rgba(255,255,255,0.15);
+  border-color: #9b6ef5;
+  box-shadow: 0 0 15px rgba(155,110,245,0.4);
+  transform: scale(1.03);
+}
+
+input::placeholder {
+  color: #aab4d4;
+  font-style: italic;
+}
+
+#send-button {
+  padding: 12px 18px;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #7957d5, #9b6ef5);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 12px rgba(155, 110, 245, 0.3);
+}
+
+#send-button:hover {
+  background: linear-gradient(120deg, #9b6ef5, #c68cff);
+  transform: scale(1.06);
+  box-shadow: 0 0 20px rgba(155, 110, 245, 0.6);
+}
+
+/* Stars, Emojis, and Animation */
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: twinkle 3s infinite ease-in-out;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+}
+
+.emoji {
+  position: absolute;
+  font-size: 28px;
+  pointer-events: none;
+  z-index: 1;
+  animation: floatUp linear forwards;
+}
+
+/* Canvas for constellation */
+canvas#constellation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Predictions fade-in box */
+#prediction-box {
+  display: none;
+  opacity: 0;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  line-height: 1.5;
+  animation: fadeIn 1s ease forwards;
+}
+</style>
+</head>
+<body>
+
+<canvas id="constellation"></canvas>
+
+<div id="chat-container">
+  <h2>🔮 The Cosmic Oracle</h2>
+  <div id="chat-log">
+    <div class="message bot">
+      Welcome, celestial wanderer! 🌙<br>
+      Share your <b>name</b>, <b>date of birth</b>, and <b>sign</b> to receive your divine forecast.<br><br>
+      Want to peek into <b>love compatibility</b>? Add your <i>crush</i> or <i>ex(es)</i> below 💖
+    </div>
+  </div>
+
+  <div id="input-area">
+    <input id="name-input" type="text" placeholder="Your Name">
+    <input id="dob-input" type="date">
+    <input id="crush-input" type="text" placeholder="Your Crush's Name">
+    <input id="ex-input" type="text" placeholder="Your Ex's Name(s), comma-separated">
+    <select id="sign-select">
+      <option value="aries">Aries</option><option value="taurus">Taurus</option>
+      <option value="gemini">Gemini</option><option value="cancer">Cancer</option>
+      <option value="leo">Leo</option><option value="virgo">Virgo</option>
+      <option value="libra">Libra</option><option value="scorpio">Scorpio</option>
+      <option value="sagittarius">Sagittarius</option><option value="capricorn">Capricorn</option>
+      <option value="aquarius">Aquarius</option><option value="pisces">Pisces</option>
+    </select>
+    <select id="day-select">
+      <option value="today">Today</option>
+      <option value="tomorrow">Tomorrow</option>
+      <option value="yesterday">Yesterday</option>
+    </select>
+    <button id="send-button">Ask the Stars ✨</button>
+  </div>
+
+  <div id="prediction-box"></div>
+</div>
+
+<script>
+const sendButton = document.getElementById("send-button");
+const inputArea = document.getElementById("input-area");
+const chatLog = document.getElementById("chat-log");
+const predictionBox = document.getElementById("prediction-box");
+const canvas = document.getElementById("constellation");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+function appendMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  msg.innerHTML = text
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/\*(.*?)\*/g, "<i>$1</i>")
+    .replace(/\n/g, "<br>");
+  chatLog.appendChild(msg);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// ✨ Stars & Constellations
+function drawStars() {
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement("div");
+    s.className = "star";
+    const size = Math.random() * 2 + 1;
+    s.style.width = `${size}px`;
+    s.style.height = `${size}px`;
+    s.style.top = `${Math.random() * window.innerHeight}px`;
+    s.style.left = `${Math.random() * window.innerWidth}px`;
+    document.body.appendChild(s);
+  }
+}
+function drawConstellation() {
+  canvas.style.display = "block";
+  ctx.strokeStyle = "rgba(173,216,230,0.5)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 80; i++) {
+    const x1 = Math.random() * canvas.width;
+    const y1 = Math.random() * canvas.height;
+    const x2 = x1 + Math.random() * 100 - 50;
+    const y2 = y1 + Math.random() * 100 - 50;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+}
+
+// 💘 Floating emoji system
+function createEmoji(symbol) {
+  const emoji = document.createElement("div");
+  emoji.className = "emoji";
+  emoji.textContent = symbol;
+  emoji.style.left = `${Math.random() * window.innerWidth}px`;
+  emoji.style.bottom = "-40px";
+  emoji.style.fontSize = `${24 + Math.random() * 24}px`;
+  emoji.style.animationDuration = `${6 + Math.random() * 4}s`;
+  document.body.appendChild(emoji);
+  setTimeout(() => emoji.remove(), 10000);
+}
+function startEmojiLoop(symbols) {
+  setInterval(() => {
+    createEmoji(symbols[Math.floor(Math.random() * symbols.length)]);
+  }, 400);
+}
+
+sendButton.onclick = async () => {
+  const name = document.getElementById("name-input").value.trim();
+  const dob = document.getElementById("dob-input").value;
+  const crush = document.getElementById("crush-input").value.trim();
+  const exes = document.getElementById("ex-input").value.trim();
+  const sign = document.getElementById("sign-select").value;
+  const day = document.getElementById("day-select").value;
+
+  if (!name) {
+    appendMessage("bot", "🌟 Please share your name, seeker of stars!");
+    return;
+  }
+
+  appendMessage("user", `**${name}** seeks the cosmic truth for **${sign}** (${day}).`);
+  sendButton.disabled = true;
+
+  // Hide inputs smoothly
+  inputArea.style.opacity = "0";
+  inputArea.style.transform = "translateY(30px)";
+  setTimeout(() => (inputArea.style.display = "none"), 800);
+
+  // Background + animation
+  if (crush || exes) {
+    document.body.style.background = "linear-gradient(160deg, #29142d, #731d56, #ff77b7)";
+    const emojis = [];
+    if (crush) emojis.push("❤️");
+    if (exes) emojis.push("💔");
+    startEmojiLoop(emojis);
+  } else {
+    drawStars();
+    drawConstellation();
+  }
+
+  // Fetch the cosmic data
+  try {
+    const res = await fetch("/ask_oracle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, dob, crush, ex: exes, sign, day }),
+    });
+    const data = await res.json();
+    appendMessage("bot", data.text);
+
+    // Reveal predictions box beautifully
+    predictionBox.innerHTML = "<b>🌠 Your Cosmic Revelation Awaits...</b>";
+    setTimeout(() => {
+      predictionBox.style.display = "block";
+      predictionBox.style.opacity = "1";
+    }, 1200);
+  } catch (err) {
+    appendMessage("bot", "🌌 The stars are silent... network disturbance detected.");
+  } finally {
+    sendButton.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
