@@ -60,13 +60,13 @@ def compute_life_predictions(dob_str: str):
         birth_year = None
 
     # Wedding age: believable range 28-36
-    wedding_age = random.randint(28, 36)
+    wedding_age = random.randint(26, 30)
 
     # Death age (lifeline): more conservative but random 45-75 (as requested)
-    death_age = random.randint(45, 75)
+    death_age = random.randint(50, 75)
 
     # True-love suggested age range: often younger - between 20 and 35
-    true_love_age = random.randint(20, 28)
+    true_love_age = random.randint(18, 24)
 
     # Decide "already met" randomly (25% chance already met if older than true_love_age)
     already_met = False

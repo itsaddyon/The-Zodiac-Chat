@@ -1,343 +1,501 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>The Zodiac Chat✨</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Zodiac Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#071029; --bg-2:#0b1830; --accent:#8b63ff; --muted:rgba(255,255,255,0.72);
+      --card: rgba(255,255,255,0.03); --glass: rgba(255,255,255,0.06);
+      --transition: 420ms cubic-bezier(.2,.9,.2,1);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#eaf0ff}
+    body{min-height:100vh;padding:20px;overflow:auto;display:flex;justify-content:center;align-items:flex-start}
 
-body {
-  font-family: 'Space Grotesk', 'Poppins', sans-serif;
-  margin: 0;
-  overflow: hidden;
-  background: radial-gradient(circle at top, #0b1320, #000);
-  color: #f0f4f8;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* lift upward */
-  padding-top: 50px;
-  min-height: 100vh;
-  transition: background 2s ease;
-}
+    /* Background canvas */
+    canvas#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* Chat Container */
-#chat-container {
-  width: 440px;
-  background: rgba(22, 29, 48, 0.88);
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 25px rgba(120, 110, 255, 0.25);
-  padding: 24px;
-  text-align: center;
-  position: relative;
-  z-index: 5;
-  transition: opacity 1.5s ease;
-}
+    /* App container */
+    .app{position:relative;z-index:2;width:100%;max-width:1100px;display:grid;grid-template-columns:360px 1fr;gap:18px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid var(--glass);backdrop-filter:blur(8px);transition:opacity var(--transition)}
+    @media(max-width:980px){.app{grid-template-columns:1fr;padding:14px}}
+    header{grid-column:1/-1;display:flex;align-items:center;gap:12px}
+    .brand h1{margin:0;font-size:20px}
+    .brand p{margin:0;color:var(--muted);font-size:13px}
 
-/* Chat log */
-#chat-log {
-  max-height: 320px;
-  overflow-y: auto;
-  margin-bottom: 15px;
-  border-bottom: 1px solid rgba(130, 150, 220, 0.2);
-  padding-bottom: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.3) transparent;
-}
+    /* Responsive cards */
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap:12px;
+      align-items:stretch;
+    }
+    .card{
+      background:var(--card);padding:12px;border-radius:10px;border:1px solid var(--glass);cursor:pointer;transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;justify-content:space-between;min-height:110px;
+    }
+    .card:hover{transform:translateY(-6px);box-shadow:0 10px 24px rgba(0,0,0,0.5)}
+    .card.active{box-shadow:0 14px 40px rgba(139,99,255,0.14);border-color:rgba(139,99,255,0.12)}
+    .card h3{margin:0 0 6px 0}
+    .card p{margin:0;color:var(--muted);font-size:13px}
 
-.message {
-  margin-bottom: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  line-height: 1.4;
-  background: rgba(85, 108, 136, 0.5);
-  text-align: left;
-  animation: fadeIn 0.6s ease;
-}
+    .panel{background:var(--card);padding:12px;border-radius:10px;border:1px solid var(--glass)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
 
-.user {
-  background: linear-gradient(120deg, #4e9bff, #6c63ff);
-  text-align: right;
-  color: white;
-}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#b88cff);border:none;padding:10px 14px;border-radius:9px;color:#fff;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
 
-.bot {
-  background: rgba(255,255,255,0.08);
-  color: #e4eaff;
-  text-align: left;
-}
+    .right{display:flex;flex-direction:column;gap:12px}
+    .result{padding:14px;border-radius:10px;border:1px solid var(--glass);background:linear-gradient(180deg, rgba(255,255,255,0.01),transparent)}
+    .banner{padding:10px;border-radius:8px;margin-bottom:8px}
+    .banner.info{background:rgba(139,99,255,0.06);color:var(--accent)}
+    .muted{color:var(--muted);font-size:13px}
+    .chips{display:flex;gap:10px;align-items:center}
+    .chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:13px;border:1px solid rgba(255,255,255,0.03)}
+    .message{white-space:pre-wrap;font-size:14px;line-height:1.6}
 
-/* Input section */
-#input-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  transition: opacity 1s ease, transform 1s ease;
-}
+    footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
 
-input, select {
-  width: 90%;
-  padding: 12px;
-  font-size: 15px;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.08);
-  outline: none;
-  transition: all 0.3s ease;
-  text-align: center;
-  letter-spacing: 0.3px;
-  box-shadow: 0 0 10px rgba(120, 110, 255, 0.1);
-}
+    /* Full-screen result view */
+    .result-fullscreen{position:fixed;inset:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));z-index:9999;display:flex;align-items:center;justify-content:center;padding:28px;transition:opacity var(--transition), transform var(--transition);opacity:0;transform:scale(0.98);pointer-events:none}
+    .result-fullscreen.show{opacity:1;transform:scale(1);pointer-events:auto}
+    .result-card{width:100%;max-width:920px;border-radius:12px;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.05);box-shadow:0 30px 80px rgba(3,4,12,0.6);color:#eaf0ff;max-height:86vh;overflow:auto}
+    .back-btn{margin-top:12px;display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer}
 
-input:focus, select:focus {
-  background: rgba(255,255,255,0.15);
-  border-color: #9b6ef5;
-  box-shadow: 0 0 15px rgba(155,110,245,0.4);
-  transform: scale(1.03);
-}
+    .fade-away{transition:transform var(--transition), opacity var(--transition);opacity:0;transform:translateY(-10px);pointer-events:none}
 
-input::placeholder {
-  color: #aab4d4;
-  font-style: italic;
-}
-
-#send-button {
-  padding: 12px 18px;
-  font-weight: 600;
-  font-size: 15px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(120deg, #7957d5, #9b6ef5);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 12px rgba(155, 110, 245, 0.3);
-}
-
-#send-button:hover {
-  background: linear-gradient(120deg, #9b6ef5, #c68cff);
-  transform: scale(1.06);
-  box-shadow: 0 0 20px rgba(155, 110, 245, 0.6);
-}
-
-/* Stars, Emojis, and Animation */
-.star {
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-  opacity: 0.7;
-  animation: twinkle 3s infinite ease-in-out;
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes floatUp {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
-}
-
-.emoji {
-  position: absolute;
-  font-size: 28px;
-  pointer-events: none;
-  z-index: 1;
-  animation: floatUp linear forwards;
-}
-
-/* Canvas for constellation */
-canvas#constellation {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-/* Predictions fade-in box */
-#prediction-box {
-  display: none;
-  opacity: 0;
-  background: rgba(255,255,255,0.08);
-  border-radius: 10px;
-  margin-top: 12px;
-  padding: 12px;
-  line-height: 1.5;
-  animation: fadeIn 1s ease forwards;
-}
-</style>
+    /* emoji hearts (z-index increased so they appear above the fullscreen result) */
+    .emoji{position:fixed;pointer-events:none;z-index:10050;font-size:26px;user-select:none;text-shadow:0 4px 18px rgba(0,0,0,0.45);will-change:transform,opacity}
+  </style>
 </head>
 <body>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
-<canvas id="constellation"></canvas>
+  <main class="app" role="main" aria-labelledby="title">
+    <header>
+      <div class="brand">
+        <h1 id="title">✨ The Zodiac Bot</h1>
+        <p class="muted">Pick a realm — Career, Love, or Personality — then answer a few gentle questions.</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <div class="chip">API: <span id="api-status">checking…</span></div>
+        <div class="chip">v1.0</div>
+      </div>
+    </header>
 
-<div id="chat-container">
-  <h2>🔮 The Cosmic Oracle</h2>
-  <div id="chat-log">
-    <div class="message bot">
-      Welcome, celestial wanderer! 🌙<br>
-      Share your <b>name</b>, <b>date of birth</b>, and <b>sign</b> to receive your divine forecast.<br><br>
-      Want to peek into <b>love compatibility</b>? Add your <i>crush</i> or <i>ex(es)</i> below 💖
+    <!-- LEFT: selection + form -->
+    <section class="left" id="left-section">
+      <div class="cards">
+        <div class="card" id="card-career" data-mode="career" tabindex="0">
+          <h3>Career</h3>
+          <p>Discover when you'll settle, launch a company, and when life eases up — focused career forecasts.</p>
+        </div>
+        <div class="card" id="card-love" data-mode="love" tabindex="0">
+          <h3>Love life</h3>
+          <p>Deep compatibility reads — bring crushes or exes for a romantic forecast.</p>
+        </div>
+        <div class="card" id="card-personality" data-mode="personality" tabindex="0">
+          <h3>Personality traits</h3>
+          <p>A concise personality snapshot inspired by your sign and birth.</p>
+        </div>
+      </div>
+
+      <div class="panel" id="form-panel" aria-live="polite">
+        <div id="form-title" style="font-weight:600;margin-bottom:8px">Select a section to begin</div>
+
+        <div id="inputs" style="display:none">
+          <label for="name">Full name</label>
+          <input id="name" type="text" placeholder="e.g. Addy">
+
+          <label for="dob" style="margin-top:8px">Date of birth</label>
+          <input id="dob" type="date">
+
+          <label for="sign" style="margin-top:8px">Zodiac sign</label>
+          <select id="sign">
+            <option value="aries">Aries</option><option value="taurus">Taurus</option><option value="gemini">Gemini</option>
+            <option value="cancer">Cancer</option><option value="leo">Leo</option><option value="virgo">Virgo</option>
+            <option value="libra">Libra</option><option value="scorpio">Scorpio</option><option value="sagittarius">Sagittarius</option>
+            <option value="capricorn">Capricorn</option><option value="aquarius">Aquarius</option><option value="pisces">Pisces</option>
+          </select>
+
+          <div id="love-only" style="display:none">
+            <label for="crush" style="margin-top:8px">Crush (optional)</label>
+            <input id="crush" type="text" placeholder="Name of crush">
+
+            <label for="ex" style="margin-top:8px">Ex(s) (optional)</label>
+            <input id="ex" type="text" placeholder="Comma-separated">
+          </div>
+
+          <div style="margin-top:10px" class="actions">
+            <button id="ask" class="primary">Ask</button>
+            <button id="clear" class="ghost">Clear</button>
+            <div style="margin-left:auto" class="muted">By team Synergy✨</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: results -->
+    <aside class="right" id="right-section">
+      <div id="banner-area"></div>
+
+      <div class="result" id="result-box">
+        <div class="chips" style="justify-content:space-between;align-items:center">
+          <div><strong id="result-type">—</strong></div>
+          <div class="chip" id="result-sign">—</div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="message" id="result-text">Your reading will appear here.</div>
+      </div>
+
+      <div class="panel" id="extra-box" style="display:none"></div>
+    </aside>
+
+    <footer>Built with heart · Keep it kind</footer>
+  </main>
+
+  <!-- Full-screen result container -->
+  <div id="full-result" class="result-fullscreen" aria-hidden="true">
+    <div class="result-card" id="full-result-card">
+      <div id="full-result-content" style="white-space:pre-wrap;line-height:1.6"></div>
+      <div style="margin-top:12px">
+        <button id="back-to-app" class="back-btn">← Back</button>
+      </div>
     </div>
   </div>
 
-  <div id="input-area">
-    <input id="name-input" type="text" placeholder="Your Name">
-    <input id="dob-input" type="date">
-    <input id="crush-input" type="text" placeholder="Your Crush's Name">
-    <input id="ex-input" type="text" placeholder="Your Ex's Name(s), comma-separated">
-    <select id="sign-select">
-      <option value="aries">Aries</option><option value="taurus">Taurus</option>
-      <option value="gemini">Gemini</option><option value="cancer">Cancer</option>
-      <option value="leo">Leo</option><option value="virgo">Virgo</option>
-      <option value="libra">Libra</option><option value="scorpio">Scorpio</option>
-      <option value="sagittarius">Sagittarius</option><option value="capricorn">Capricorn</option>
-      <option value="aquarius">Aquarius</option><option value="pisces">Pisces</option>
-    </select>
-    <select id="day-select">
-      <option value="today">Today</option>
-      <option value="tomorrow">Tomorrow</option>
-      <option value="yesterday">Yesterday</option>
-    </select>
-    <button id="send-button">Ask the Stars ✨</button>
-  </div>
-
-  <div id="prediction-box"></div>
-</div>
-
-<script>
-const sendButton = document.getElementById("send-button");
-const inputArea = document.getElementById("input-area");
-const chatLog = document.getElementById("chat-log");
-const predictionBox = document.getElementById("prediction-box");
-const canvas = document.getElementById("constellation");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-function appendMessage(sender, text) {
-  const msg = document.createElement("div");
-  msg.className = `message ${sender}`;
-  msg.innerHTML = text
-    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-    .replace(/\*(.*?)\*/g, "<i>$1</i>")
-    .replace(/\n/g, "<br>");
-  chatLog.appendChild(msg);
-  chatLog.scrollTop = chatLog.scrollHeight;
-}
-
-// ✨ Stars & Constellations
-function drawStars() {
-  for (let i = 0; i < 150; i++) {
-    const s = document.createElement("div");
-    s.className = "star";
-    const size = Math.random() * 2 + 1;
-    s.style.width = `${size}px`;
-    s.style.height = `${size}px`;
-    s.style.top = `${Math.random() * window.innerHeight}px`;
-    s.style.left = `${Math.random() * window.innerWidth}px`;
-    document.body.appendChild(s);
-  }
-}
-function drawConstellation() {
-  canvas.style.display = "block";
-  ctx.strokeStyle = "rgba(173,216,230,0.5)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 80; i++) {
-    const x1 = Math.random() * canvas.width;
-    const y1 = Math.random() * canvas.height;
-    const x2 = x1 + Math.random() * 100 - 50;
-    const y2 = y1 + Math.random() * 100 - 50;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
-}
-
-// 💘 Floating emoji system
-function createEmoji(symbol) {
-  const emoji = document.createElement("div");
-  emoji.className = "emoji";
-  emoji.textContent = symbol;
-  emoji.style.left = `${Math.random() * window.innerWidth}px`;
-  emoji.style.bottom = "-40px";
-  emoji.style.fontSize = `${24 + Math.random() * 24}px`;
-  emoji.style.animationDuration = `${6 + Math.random() * 4}s`;
-  document.body.appendChild(emoji);
-  setTimeout(() => emoji.remove(), 10000);
-}
-function startEmojiLoop(symbols) {
-  setInterval(() => {
-    createEmoji(symbols[Math.floor(Math.random() * symbols.length)]);
-  }, 400);
-}
-
-sendButton.onclick = async () => {
-  const name = document.getElementById("name-input").value.trim();
-  const dob = document.getElementById("dob-input").value;
-  const crush = document.getElementById("crush-input").value.trim();
-  const exes = document.getElementById("ex-input").value.trim();
-  const sign = document.getElementById("sign-select").value;
-  const day = document.getElementById("day-select").value;
-
-  if (!name) {
-    appendMessage("bot", "🌟 Please share your name, seeker of stars!");
-    return;
+  <script>
+  /* ---------- seeded RNG for deterministic personality facts ---------- */
+  function seededRandom(seed){
+    let t = seed >>> 0;
+    return function(){
+      t += 0x6D2B79F5;
+      let r = Math.imul(t ^ t >>> 15, 1 | t);
+      r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
+      return ((r ^ r >>> 14) >>> 0) / 4294967296;
+    }
   }
 
-  appendMessage("user", `**${name}** seeks the cosmic truth for **${sign}** (${day}).`);
-  sendButton.disabled = true;
-
-  // Hide inputs smoothly
-  inputArea.style.opacity = "0";
-  inputArea.style.transform = "translateY(30px)";
-  setTimeout(() => (inputArea.style.display = "none"), 800);
-
-  // Background + animation
-  if (crush || exes) {
-    document.body.style.background = "linear-gradient(160deg, #29142d, #731d56, #ff77b7)";
-    const emojis = [];
-    if (crush) emojis.push("❤️");
-    if (exes) emojis.push("💔");
-    startEmojiLoop(emojis);
-  } else {
-    drawStars();
-    drawConstellation();
+  /* ---------- small utility to pick n items from array deterministically ---------- */
+  function pickN(seed, arr, n){
+    const rnd = seededRandom(seed);
+    const copy = arr.slice();
+    const out = [];
+    for(let i=0;i<n && copy.length;i++){
+      const idx = Math.floor(rnd()*copy.length);
+      out.push(copy.splice(idx,1)[0]);
+    }
+    return out;
   }
 
-  // Fetch the cosmic data
-  try {
-    const res = await fetch("/ask_oracle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, dob, crush, ex: exes, sign, day }),
-    });
-    const data = await res.json();
-    appendMessage("bot", data.text);
+  /* ---------- personality facts generator using DOB + sign ---------- */
+  function personalityFacts(seedNumber, sign, count){
+    const baseFacts = [
+      "quick learner who adapts to new ideas swiftly",
+      "prefers deep, focused work sessions",
+      "natural at spotting patterns and solving puzzles",
+      "values routine and small daily wins",
+      "loves mentoring others and sharing knowledge",
+      "enjoys creative side-projects in spare time",
+      "keeps calm under pressure and thinks clearly",
+      "makes decisions with both heart and logic",
+      "good at networking and forming useful connections",
+      "often the one to start practical initiatives"
+    ];
 
-    // Reveal predictions box beautifully
-    predictionBox.innerHTML = "<b>🌠 Your Cosmic Revelation Awaits...</b>";
-    setTimeout(() => {
-      predictionBox.style.display = "block";
-      predictionBox.style.opacity = "1";
-    }, 1200);
-  } catch (err) {
-    appendMessage("bot", "🌌 The stars are silent... network disturbance detected.");
-  } finally {
-    sendButton.disabled = false;
+    const signBoosts = {
+      aries: ["bold decision-maker", "thrives on challenge"],
+      taurus: ["patient and persistent", "values comfort and stability"],
+      gemini: ["curious and versatile", "excellent communicator"],
+      cancer: ["empathetic and loyal", "nurturing to close ones"],
+      leo: ["charismatic leader", "loves recognition & spotlight"],
+      virgo: ["detail-oriented and organised", "values perfection"],
+      libra: ["diplomatic and fair-minded", "strong aesthetic sense"],
+      scorpio: ["intensely focused", "deep thinker and loyal"],
+      sagittarius: ["adventurous and optimistic", "loves learning"],
+      capricorn: ["disciplined and ambitious", "long-term planner"],
+      aquarius: ["innovative and future-focused", "values independence"],
+      pisces: ["intuitive and creative", "compassionate toward others"]
+    };
+
+    let pool = baseFacts.slice();
+    const boosts = signBoosts[sign.toLowerCase()] || [];
+    pool = pool.concat(boosts);
+
+    return pickN(seedNumber + sign.length, pool, count);
   }
-};
-</script>
+
+  /* ---------- setup & elements ---------- */
+  const apiStatus = document.getElementById('api-status');
+  async function checkApi(){ try { const r = await fetch('/healthz',{cache:'no-store'}); const j = await r.json(); apiStatus.textContent=j.api_key_present? 'reachable' : 'offline'; } catch(e){ apiStatus.textContent='Online'; } }
+  checkApi();
+
+  const cards = { career:document.getElementById('card-career'), love:document.getElementById('card-love'), personality:document.getElementById('card-personality') };
+  const formTitle = document.getElementById('form-title'), inputs = document.getElementById('inputs'), loveOnly = document.getElementById('love-only');
+  const nameEl=document.getElementById('name'), dobEl=document.getElementById('dob'), signEl=document.getElementById('sign'), crushEl=document.getElementById('crush'), exEl=document.getElementById('ex');
+  const askBtn=document.getElementById('ask'), clearBtn=document.getElementById('clear');
+  const resultType = document.getElementById('result-type'), resultSign = document.getElementById('result-sign'), resultText = document.getElementById('result-text');
+  const extraBox = document.getElementById('extra-box'), bannerArea=document.getElementById('banner-area');
+
+  const appMain = document.querySelector('.app'), leftSection = document.getElementById('left-section'), rightSection = document.getElementById('right-section');
+  const fullResult = document.getElementById('full-result'), fullResultContent = document.getElementById('full-result-content'), backBtn = document.getElementById('back-to-app');
+
+  let currentMode = null;
+  window.currentMode = currentMode; // keep global reference
+
+  function selectMode(mode){
+    currentMode = mode;
+    window.currentMode = currentMode;
+    Object.values(cards).forEach(c=>c.classList.remove('active'));
+    cards[mode].classList.add('active');
+    inputs.style.display='block';
+    formTitle.textContent = mode === 'career' ? 'Career questions — a few points to guide the reading' : (mode === 'love' ? 'Love questions — tell me about the heart' : 'Personality questions — quick snapshot');
+    loveOnly.style.display = mode === 'love' ? 'block' : 'none';
+    resultType.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+    resultSign.textContent = '—';
+    resultText.textContent = 'Answer the questions and press Ask.';
+    extraBox.style.display='none';
+    bannerArea.innerHTML='';
+  }
+
+  Object.keys(cards).forEach(k=>{
+    cards[k].addEventListener('click', ()=> selectMode(k));
+    cards[k].addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') selectMode(k); });
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    nameEl.value=''; dobEl.value=''; signEl.value='aries'; if(crushEl) crushEl.value=''; if(exEl) exEl.value=''; resultText.textContent='Your reading will appear here.'; extraBox.style.display='none'; bannerArea.innerHTML='';
+  });
+
+  /* ---------- show/hide full result overlay ---------- */
+  function showFullResult(html){
+    const children = Array.from(appMain.children);
+    children.forEach(ch => { ch.classList.add('fade-away'); });
+    fullResultContent.innerHTML = html;
+    fullResult.setAttribute('aria-hidden','false');
+    setTimeout(()=> fullResult.classList.add('show'), 220);
+    // start hearts for love if applicable - compatibility options (Option C: automatic)
+    try{
+      if(window.currentMode === 'love' && typeof window.startHearts === 'function'){
+        // compute a compatibility score automatically and choose options
+        const score = computeCompatibilityScore();
+        const opts = heartsOptionsForScore(score);
+        // select emoji set: if score low but 'ex' exists, show broken heart dominant
+        const emojis = opts.emojis;
+        window.startHearts(emojis, opts);
+      }
+    }catch(e){}
+  }
+
+  function hideFullResult(){
+    fullResult.classList.remove('show');
+    fullResult.setAttribute('aria-hidden','true');
+    // stop hearts when hiding
+    try{ if(typeof window.stopHearts === 'function'){ window.stopHearts(); } }catch(e){}
+    setTimeout(()=> { const children = Array.from(appMain.children); children.forEach(ch => { ch.classList.remove('fade-away'); }); }, 320);
+  }
+  backBtn.addEventListener('click', hideFullResult);
+
+  /* ---------- compatibility scoring (Option C automatic behavior) ---------- */
+  function computeCompatibilityScore(){
+    // Lightweight deterministic hash using inputs: name, sign, dob, crush, ex
+    // produce a 0..100 score. This is purely client-side playful heuristic.
+    let s = (nameEl.value||'') + '|' + (signEl.value||'') + '|' + (dobEl.value||'') + '|' + (crushEl?crushEl.value:'') + '|' + (exEl?exEl.value:'');
+    if(!s.trim()) return 50;
+    // simple hash
+    let h = 2166136261 >>> 0;
+    for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); h = h >>> 0; }
+    return Math.floor((h % 101)); // 0..100
+  }
+
+  function heartsOptionsForScore(score){
+    // returns an options object { emojis:[], spawnRate, minDur, maxDur, intensity }
+    // intensity roughly controls how often and how many spawn bursts.
+    // score 0..100
+    if(score >= 80){
+      return { emojis: ['💖','❤️','💘'], spawnRate:800, minDur:7000, maxDur:11000, intensity:1.0 };
+    } else if(score >= 60){
+      return { emojis: ['💖','❤️'], spawnRate:1000, minDur:7000, maxDur:12000, intensity:0.75 };
+    } else if(score >= 35){
+      return { emojis: ['❤️','💔'], spawnRate:1400, minDur:9000, maxDur:13000, intensity:0.5 };
+    } else {
+      // low score: fewer broken hearts, slow float
+      return { emojis: ['💔'], spawnRate:1800, minDur:10000, maxDur:15000, intensity:0.35 };
+    }
+  }
+
+  /* ---------- submission behavior ---------- */
+  askBtn.addEventListener('click', async ()=>{
+    if(!currentMode){ alert('Please pick Career, Love, or Personality first.'); return; }
+    if(!nameEl.value.trim()){ resultText.textContent='Please enter your name.'; nameEl.focus(); return; }
+
+    resultText.textContent = 'Contacting the oracle…';
+    resultSign.textContent = signEl.value.toUpperCase();
+    extraBox.style.display = 'none';
+    bannerArea.innerHTML='';
+
+    const payload = {
+      name:nameEl.value.trim(),
+      dob:dobEl.value || '',
+      sign:signEl.value || 'aries',
+      crush: crushEl ? crushEl.value.trim() : '',
+      ex: exEl ? exEl.value.trim() : '',
+      mode: currentMode,
+      day: 'today'
+    };
+
+    try{
+      const res = await fetch('/ask_oracle', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), cache:'no-store' });
+      if(!res.ok){ resultText.textContent = 'Server error. Try again later.'; return; }
+      const data = await res.json();
+
+      const rawText = (data.text || '');
+      const safeText = rawText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      // Helper: extract and remove lines matching patterns, returns {filteredLines, extracted: {lifeline}}
+      function extractAndFilter(lines){
+        const filtered = [];
+        let lifeline = null;
+        for(const ln of lines){
+          const low = ln.toLowerCase();
+          if(/lifeline/i.test(ln)){ lifeline = ln; continue; }
+          if(/wedding/i.test(low) || /true love/i.test(low) || /true-love/i.test(low) || /true love:/i.test(low) ){ continue; }
+          filtered.push(ln);
+        }
+        return { filtered, lifeline };
+      }
+
+      if(currentMode === 'personality'){
+        resultText.innerHTML = safeText.split('\n').slice(0,6).join('<br>');
+        let birthYear = null;
+        if(dobEl.value){ const parts = dobEl.value.split('-'); if(parts[0]) birthYear = parseInt(parts[0]); }
+        const seed = (birthYear && !isNaN(birthYear)) ? birthYear + signEl.value.length : Date.now();
+        const facts = personalityFacts(seed, signEl.value, 3);
+        let html = `<h2 style="margin-top:0">Personality Snapshot</h2>`;
+        html += `<div style="margin-top:12px">${safeText.replace(/\n/g,'<br>')}</div>`;
+        html += `<div style="margin-top:16px"><strong>A few facts about you</strong><ul style="margin-top:8px">`;
+        facts.forEach(f=> html += `<li>${f}</li>`);
+        html += `</ul></div>`;
+        showFullResult(html);
+
+      } else if(currentMode === 'career'){
+        const lines = safeText.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+        const { filtered, lifeline } = extractAndFilter(lines);
+        let birthYear = null;
+        if(dobEl.value){ const parts = dobEl.value.split('-'); if(parts[0]) birthYear = parseInt(parts[0]); }
+        const seed = (birthYear && !isNaN(birthYear)) ? birthYear : Math.floor(Math.random()*100000);
+        const rnd = seededRandom(seed);
+        const settle_age = 28 + Math.floor(rnd()*13);
+        const settle_year = birthYear ? (birthYear + settle_age) : null;
+        const company_age = 30 + Math.floor(rnd()*21);
+        const company_year = birthYear ? (birthYear + company_age) : null;
+        const enjoy_age = 35 + Math.floor(rnd()*21);
+        const enjoy_year = birthYear ? (birthYear + enjoy_age) : null;
+        let careerHtml = `<h2 style="margin-top:0">Career Forecast</h2>`;
+        careerHtml += `<div style="margin-top:12px">${filtered.join('<br>') || safeText.replace(/\n/g,'<br>')}</div>`;
+        careerHtml += `<div style="margin-top:12px"><ul>`;
+        if(settle_year) careerHtml += `<li>Settle around age <strong>${settle_age}</strong> (≈ ${settle_year}).</li>`; else careerHtml += `<li>Settle around age <strong>${settle_age}</strong>.</li>`;
+        if(company_year) careerHtml += `<li>Possible company around age <strong>${company_age}</strong> (≈ ${company_year}).</li>`; else careerHtml += `<li>Possible company around age <strong>${company_age}</strong>.</li>`;
+        if(enjoy_year) careerHtml += `<li>Noticeable enjoyment around age <strong>${enjoy_age}</strong> (≈ ${enjoy_year}).</li>`; else careerHtml += `<li>Noticeable enjoyment around age <strong>${enjoy_age}</strong>.</li>`;
+        careerHtml += `</ul></div>`;
+        if(lifeline){
+          careerHtml += `<div style="margin-top:14px"><strong>Lifeline:</strong> ${lifeline}</div>`;
+        }
+        showFullResult(careerHtml);
+        resultText.innerHTML = filtered.slice(0,8).join('<br>');
+
+      } else { // love
+        resultText.innerHTML = safeText.split('\n').slice(0,6).join('<br>');
+        extraBox.style.display = 'block';
+        extraBox.innerHTML = `<div class="muted">Compatibility quick view</div><div style="margin-top:8px">${safeText.split('\n').slice(0,6).join('<br>')}</div>`;
+        const loveHtml = `<h2 style="margin-top:0">Love Reading</h2><div style="margin-top:12px">${safeText.replace(/\n/g,'<br>')}</div>`;
+        showFullResult(loveHtml);
+      }
+
+      if(data.error || data.backend_note){ bannerArea.innerHTML = '<div class="banner info">Using local fallback (external API unavailable).</div>'; }
+
+    }catch(err){
+      console.error(err);
+      resultText.textContent = 'Network or server issue — the oracle is unreachable.';
+    } finally {
+      checkApi();
+    }
+  });
+
+  /* ---------- starfield background ---------- */
+  (function(){
+    const canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+    const ctx=canvas.getContext('2d');
+    function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    const stars=[]; function init(){ stars.length=0; let count=Math.max(80, Math.floor((canvas.width*canvas.height)/12000)); for(let i=0;i<count;i++){ stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.6+0.4,a:Math.random()*0.7+0.2,t:Math.random()*6.28,tw:0.008+Math.random()*0.02}); } }
+    init();
+    (function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ s.t+=s.tw; const alpha = s.a + Math.sin(s.t)*0.18; const g = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6); g.addColorStop(0,`rgba(255,255,255,${alpha.toFixed(3)})`); g.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=g; ctx.fillRect(s.x-s.r*6, s.y-s.r*6, s.r*12, s.r*12); }); requestAnimationFrame(draw); })();
+  })();
+
+  /* ---------- hearts across background (controlled, automatic Option C) ---------- */
+  (function(){
+    let interval = null;
+    let emojis = [];
+    let opts = { spawnRate:1200, minDur:8000, maxDur:12000, intensity:0.6 };
+
+    function spawn(sym){
+      const el = document.createElement('div');
+      el.className = 'emoji';
+      el.textContent = sym;
+      const size = 18 + Math.random()*36;
+      el.style.fontSize = size + 'px';
+
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+
+      // upward gentle drift
+      const angle = (Math.random()*Math.PI*0.8) + Math.PI*0.1;
+      const dist = 0.35 * window.innerHeight + Math.random()*0.5*window.innerHeight;
+      const dx = Math.cos(angle) * dist * (Math.random() < 0.5 ? -1 : 1);
+      const dy = -Math.abs(Math.sin(angle) * dist);
+
+      const dur = opts.minDur + Math.random()*(opts.maxDur - opts.minDur);
+      el.style.transition = `transform ${dur}ms cubic-bezier(.25,.8,.25,1), opacity ${dur}ms linear`;
+      el.style.opacity = '1';
+      document.body.appendChild(el);
+
+      requestAnimationFrame(() => {
+        el.style.transform = `translate(${dx}px, ${dy}px) rotate(${(Math.random()*30-15).toFixed(2)}deg)`;
+        el.style.opacity = '0';
+      });
+
+      setTimeout(()=>{ try{ el.remove(); }catch(e){} }, dur + 120);
+    }
+
+    function start(list, options){
+      emojis = (list && list.length) ? list.slice() : ['❤️'];
+      opts = Object.assign(opts, options || {});
+      if(interval) return;
+      interval = setInterval(()=>{
+        // spawn count per tick influenced by intensity
+        const roll = Math.random();
+        const spawnCount = (roll < opts.intensity) ? 1 + Math.floor(Math.random()*2) : 0;
+        for(let i=0;i<spawnCount;i++){
+          const sym = emojis[Math.floor(Math.random()*emojis.length)];
+          spawn(sym);
+        }
+      }, opts.spawnRate);
+    }
+
+    function stop(){
+      if(interval){ clearInterval(interval); interval = null; }
+    }
+
+    window.startHearts = start;
+    window.stopHearts = stop;
+  })();
+
+  </script>
 </body>
 </html>
